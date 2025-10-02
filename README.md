@@ -64,7 +64,7 @@ updated_at: TIMESTAMP
 ### Option 1: Local Development
 
 1. **Clone and Setup**
-git clone https://github.com/yourusername/indonesia-regions-api.git
+git clone https://github.com/nabilakiswanto/indonesia-regions-api.git
 cd indonesia-regions-api
 npm install
 
@@ -88,7 +88,7 @@ npm run seed
 ### Option 2: Docker Deployment
 
 1. **Quick Docker Setup**
-git clone https://github.com/yourusername/indonesia-regions-api.git
+git clone https://github.com/nabilakiswanto/indonesia-regions-api.git
 cd indonesia-regions-api
 npm run docker:run
 
@@ -241,7 +241,7 @@ postgres_data:
 #### 1. Traditional VPS/Server
 Clone repository
 
-git clone https://github.com/yourusername/indonesia-regions-api.git
+git clone https://github.com/nabilakiswanto/indonesia-regions-api.git
 cd indonesia-regions-api
 Install dependencies
 
