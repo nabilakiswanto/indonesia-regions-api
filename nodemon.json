@@ -1,0 +1,46 @@
+{
+  "watch": [
+    "server.js",
+    "src/"
+  ],
+  "ext": "js,json,sql",
+  "ignore": [
+    "node_modules/**/*",
+    "logs/**/*",
+    "tests/**/*",
+    "migrations/**/*",
+    "docker/**/*",
+    "scripts/**/*",
+    ".git/**/*",
+    "*.log",
+    "*.md",
+    ".env*",
+    "coverage/**/*",
+    ".nyc_output/**/*",
+    "dist/**/*",
+    "build/**/*"
+  ],
+  "delay": 2000,
+  "verbose": true,
+  "restartable": "rs",
+  "colours": true,
+  "legacyWatch": true,
+  "pollingInterval": 1000,
+  "env": {
+    "NODE_ENV": "development",
+    "CHOKIDAR_USEPOLLING": "true",
+    "CHOKIDAR_INTERVAL": "1000"
+  },
+  "events": {
+    "start": "echo '🚀 [$(date)] Starting Indonesia Regions API...'",
+    "crash": "echo '💥 [$(date)] API crashed - Check logs for errors'",
+    "exit": "echo '👋 [$(date)] Indonesia Regions API has stopped'",
+    "restart": "echo '🔄 [$(date)] Restarting API due to file changes...'",
+    "config:update": "echo '⚙️  [$(date)] nodemon config updated'"
+  },
+  "signal": "SIGTERM",
+  "stdout": true,
+  "stdin": true,
+  "runOnChangeOnly": false,
+  "legacy": false
+}

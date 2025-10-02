@@ -1,0 +1,56 @@
+# Node modules and npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files (will be copied selectively)
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Tests and coverage
+coverage/
+.nyc_output/
+test-results/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Build outputs
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (avoid recursive copy)
+Dockerfile*
+docker-compose*.yml
+docker/
+
+# Scripts
+scripts/

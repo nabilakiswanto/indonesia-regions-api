@@ -1,0 +1,58 @@
+# =================================
+# Indonesia Regions API Dockerfile
+# =================================
+
+FROM node:20-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache dumb-init curl
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+WORKDIR /app
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# =================================
+# Dependencies stage
+# =================================
+FROM base AS dependencies
+
+# Copy package files
+COPY --chown=nodejs:nodejs package*.json ./
+
+# Install ALL dependencies - THIS IS THE CRITICAL LINE
+RUN npm ci && npm cache clean --force
+
+# =================================
+# Development stage  
+# =================================
+FROM dependencies AS development
+
+# Copy configuration files
+COPY --chown=nodejs:nodejs nodemon.json ./
+COPY --chown=nodejs:nodejs healthcheck.js ./
+
+# Copy source code
+COPY --chown=nodejs:nodejs server.js ./
+COPY --chown=nodejs:nodejs src/ ./src/
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Expose ports
+EXPOSE 3000 9229
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node healthcheck.js || exit 1
+
+# Environment variables
+ENV NODE_ENV=development
+ENV CHOKIDAR_USEPOLLING=true
+
+# Start with nodemon
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["npm", "run", "dev"]

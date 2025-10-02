@@ -141,3 +141,24 @@ vite.config.ts.timestamp-*
 #macos
 .DS_Store
 */.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Keep example files
+!.env.example
+!.env.template
+
+# Docker volumes
+volumes/
+postgres_dev_data/
+pgladmin_dev_data/
+redis_dev_data/
+
+# Logs
+logs/
+*.log
