@@ -1,10 +1,6 @@
-# Remove the version line - it's obsolete in Docker Compose V2
 name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}
 
 services:
-  # =================================
-  # Main API Application
-  # =================================
   api:
     build:
       context: ..
@@ -19,7 +15,6 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=${APP_PORT:-3000}
       - LOG_LEVEL=${LOG_LEVEL:-debug}
-      - API_VERSION=${API_VERSION:-v1}
       
       # Database connection
       - DB_HOST=${POSTGRES_HOST:-postgres}
@@ -28,6 +23,11 @@ services:
       - DB_USER=${POSTGRES_USER:-postgres}
       - DB_PASSWORD=${POSTGRES_PASSWORD:?Database password is required}
       - DB_SSL=false
+      
+      # Migration settings
+      - INCLUDE_VILLAGES=${INCLUDE_VILLAGES:-true}
+      - VILLAGE_LIMIT=${VILLAGE_LIMIT:-10000}
+      - MIGRATION_LOG_LEVEL=${MIGRATION_LOG_LEVEL:-info}
       
       # Security
       - API_KEY=${API_KEY:?API key is required}
@@ -44,14 +44,16 @@ services:
     volumes:
       # Mount source code for hot reload
       - ../src:/app/src:cached
-      - ../tests:/app/tests:cached
+      - ../scripts:/app/scripts:cached
+      - ../migrations:/app/migrations:cached
       - ../package.json:/app/package.json:ro
       - ../nodemon.json:/app/nodemon.json:ro
-      - ../README.md:/app/README.md:ro
       # Prevent node_modules from being overwritten
       - /app/node_modules
-      # Mount logs directory
+      # Mount logs directory for persistent logs
       - ../logs:/app/logs
+      # Mount data directory for exports/backups
+      - ../data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,16 +64,44 @@ services:
     restart: unless-stopped
     stdin_open: true
     tty: true
-    healthcheck:
-      test: ["CMD", "node", "healthcheck.js"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # =================================
-  # PostgreSQL Database
-  # =================================
+  migrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+      target: migrator
+    container_name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}-migrator
+    environment:
+      # Database connection
+      - DB_HOST=${POSTGRES_HOST:-postgres}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+      - DB_NAME=${POSTGRES_DB:-indonesia_regions_dev}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?Database password is required}
+      - DB_SSL=false
+      
+      # Migration settings
+      - INCLUDE_VILLAGES=${INCLUDE_VILLAGES:-true}
+      - VILLAGE_LIMIT=${VILLAGE_LIMIT:-10000}
+      - MIGRATION_LOG_LEVEL=${MIGRATION_LOG_LEVEL:-info}
+      - NODE_ENV=development
+    volumes:
+      # Mount logs directory for migration logs
+      - ../logs:/app/logs
+      # Mount data directory for exports
+      - ../data:/app/data
+      # Mount scripts for development
+      - ../scripts:/app/scripts:cached
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dev-network
+    profiles:
+      - migration
+    # Override command based on migration type
+    command: ["node", "scripts/migrate-indonesia-regions.js"]
+
   postgres:
     image: postgres:${POSTGRES_VERSION:-15-alpine}
     container_name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}-postgres-dev
@@ -87,7 +117,7 @@ services:
       - postgres_dev_data:/var/lib/postgresql/data
       # Initialization scripts
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
-      - ./postgres/seed-data.sql:/docker-entrypoint-initdb.d/002-seed-data.sql:ro
+      - ../migrations/001_create_regions_table.sql:/docker-entrypoint-initdb.d/002-create-regions.sql:ro
       # PostgreSQL configuration
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     networks:
@@ -107,9 +137,6 @@ services:
       -c shared_buffers=256MB
       -c effective_cache_size=1GB
 
-  # =================================
-  # pgAdmin for Database Management
-  # =================================
   pgadmin:
     image: dpage/pgadmin4:${PGADMIN_VERSION:-8.1}
     container_name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}-pgadmin-dev
@@ -122,7 +149,7 @@ services:
     ports:
       - "${PGADMIN_PORT:-8080}:80"
     volumes:
-      # pgAdmin data persistence - FIXED THE TYPO HERE
+      # pgAdmin data persistence
       - pgadmin_dev_data:/var/lib/pgadmin
       # Pre-configured servers
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
@@ -133,9 +160,7 @@ services:
       - dev-network
     restart: unless-stopped
 
-  # =================================
-  # Redis for Caching
-  # =================================
+
   redis:
     image: redis:${REDIS_VERSION:-7-alpine}
     container_name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}-redis-dev
@@ -162,47 +187,23 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  # =================================
-  # Redis Commander (Redis GUI)
-  # =================================
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}-redis-commander-dev
-    environment:
-      - REDIS_HOSTS=local:${REDIS_HOST:-redis}:${REDIS_PORT:-6379}${REDIS_PASSWORD:+:${REDIS_PASSWORD}}
-      - HTTP_USER=${REDIS_COMMANDER_HTTP_USER:-admin}
-      - HTTP_PASSWORD=${REDIS_COMMANDER_HTTP_PASSWORD:-admin123}
-      - PORT=8081
-    ports:
-      - "${REDIS_COMMANDER_PORT:-8081}:8081"
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - dev-network
-    restart: unless-stopped
 
-# =================================
-# Volumes - FIXED THE TYPO HERE
-# =================================
 volumes:
   postgres_dev_data:
     driver: local
     name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}_postgres_dev_data
-  pgadmin_dev_data:  # FIXED: was pgladmin_dev_data
+  pgadmin_dev_data:
     driver: local
     name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}_pgadmin_dev_data
   redis_dev_data:
     driver: local
     name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}_redis_dev_data
 
-# =================================
-# Networks
-# =================================
+
 networks:
   dev-network:
     driver: bridge
     name: ${COMPOSE_PROJECT_NAME:-indonesia-regions-api}_dev_network
     ipam:
       config:
-        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}
+        - subnet: ${NETWORK_SUBNET:-192.168.100.0/24}

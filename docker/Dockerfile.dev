@@ -1,11 +1,16 @@
 # =================================
 # Indonesia Regions API Dockerfile
+# Enhanced with Migration Support
 # =================================
 
 FROM node:20-alpine AS base
 
-# Install system dependencies
-RUN apk add --no-cache dumb-init curl
+# Install system dependencies including curl for API calls
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    wget \
+    && rm -rf /var/cache/apk/*
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -23,11 +28,11 @@ FROM base AS dependencies
 # Copy package files
 COPY --chown=nodejs:nodejs package*.json ./
 
-# Install ALL dependencies - THIS IS THE CRITICAL LINE
+# Install ALL dependencies (including axios for migration)
 RUN npm ci && npm cache clean --force
 
 # =================================
-# Development stage  
+# Development stage with migration support
 # =================================
 FROM dependencies AS development
 
@@ -35,12 +40,19 @@ FROM dependencies AS development
 COPY --chown=nodejs:nodejs nodemon.json ./
 COPY --chown=nodejs:nodejs healthcheck.js ./
 
+# Copy migration scripts and SQL files
+COPY --chown=nodejs:nodejs scripts/ ./scripts/
+COPY --chown=nodejs:nodejs migrations/ ./migrations/
+
 # Copy source code
 COPY --chown=nodejs:nodejs server.js ./
 COPY --chown=nodejs:nodejs src/ ./src/
 
-# Create logs directory
-RUN mkdir -p logs
+# Create directories with proper permissions
+RUN mkdir -p logs data && chown nodejs:nodejs logs data
+
+# Make migration script executable
+RUN chmod +x scripts/migrate-indonesia-regions.js
 
 # Expose ports
 EXPOSE 3000 9229
@@ -53,6 +65,28 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 ENV NODE_ENV=development
 ENV CHOKIDAR_USEPOLLING=true
 
-# Start with nodemon
+# Start with nodemon by default
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["npm", "run", "dev"]
+
+# =================================
+# Migration stage (separate stage for running migrations)
+# =================================
+FROM dependencies AS migrator
+
+# Copy only migration-related files
+COPY --chown=nodejs:nodejs scripts/ ./scripts/
+COPY --chown=nodejs:nodejs migrations/ ./migrations/
+COPY --chown=nodejs:nodejs src/config/ ./src/config/
+
+# Create directories
+RUN mkdir -p logs data
+
+# Make script executable
+RUN chmod +x scripts/migrate-indonesia-regions.js
+
+# Set environment
+ENV NODE_ENV=development
+
+# Default command for migration
+CMD ["node", "scripts/migrate-indonesia-regions.js"]
