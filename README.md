@@ -549,8 +549,6 @@ GET /health
 # Database statistics  
 GET /api/regions/stats
 
-# Prometheus metrics (if enabled)
-GET /metrics
 ```
 
 ### Performance Benchmarks
