@@ -4,8 +4,8 @@ const logger = require('./src/config/logger');
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  logger.info(`🚀 Indonesia Regions API running on port ${PORT}`);
-  logger.info(`📖 API Documentation: http://localhost:${PORT}/api/docs`);
+  logger.info(`Indonesia Regions API running on port ${PORT}`);
+  logger.info(`API Documentation: http://localhost:${PORT}/api/docs`);
 });
 
 // Graceful shutdown
