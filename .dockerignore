@@ -52,5 +52,3 @@ Dockerfile*
 docker-compose*.yml
 docker/
 
-# Scripts
-scripts/
