@@ -19,6 +19,8 @@
     "docker:dev:shell": "docker compose -f docker/docker-compose.dev.yml --env-file .env exec api sh",
     "docker:dev:db": "docker compose -f docker/docker-compose.dev.yml --env-file .env exec postgres psql -U $POSTGRES_USER -d $POSTGRES_DB",
     "docker:dev:rebuild": "docker compose -f docker/docker-compose.dev.yml --env-file .env up --build --force-recreate",
+    "docker:sync": "docker compose -f docker/docker-compose.dev.yml --env-file .env --profile migration run --rm migrator node scripts/migrate-indonesia-regions-incremental.js",
+    "docker:sync:provinces-only": "INCLUDE_DISTRICTS=false INCLUDE_VILLAGES=false docker compose -f docker/docker-compose.dev.yml --env-file .env --profile migration run --rm migrator node scripts/migrate-indonesia-regions-incremental.js",
     "seed:dev": "node scripts/seed-development-data.js",
     "test:docker": "docker compose -f docker/docker-compose.dev.yml exec api npm test",
     "docker:prod": "docker compose -f docker/docker-compose.dev.yml --env-file .env.production up --build",
@@ -27,7 +29,14 @@
     "env:generate": "node scripts/generate-env.js",
     "migrate:regions": "node scripts/migrate-indonesia-regions.js",
     "migrate:regions:no-villages": "INCLUDE_VILLAGES=false node scripts/migrate-indonesia-regions.js",
-    "migrate:regions:sample": "VILLAGE_LIMIT=100 node scripts/migrate-indonesia-regions.js"
+    "migrate:regions:sample": "VILLAGE_LIMIT=100 node scripts/migrate-indonesia-regions.js",
+    "sync:regions": "node scripts/sync-indonesia-regions.js",
+    "sync:regions:provinces-only": "INCLUDE_DISTRICTS=false INCLUDE_VILLAGES=false node scripts/sync-indonesia-regions.js",
+    "sync:regions:no-villages": "INCLUDE_VILLAGES=false node scripts/sync-indonesia-regions.js",
+    "sync:regions:sample": "DISTRICT_LIMIT=5 VILLAGE_LIMIT=100 node scripts/sync-indonesia-regions.js",
+    "check:new-data": "node scripts/check-for-new-data.js",
+    "cron:daily-sync": "node scripts/sync-indonesia-regions.js",
+    "cron:weekly-full-sync": "node scripts/migrate-indonesia-regions.js"
   },
   "keywords": [
     "indonesia",
