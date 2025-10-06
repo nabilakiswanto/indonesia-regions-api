@@ -324,8 +324,11 @@ indonesia-regions-api/
 │   ├── services/                   # Business logic
 │   └── utils/                      # Helper functions
 ├── scripts/
+│   ├── check-for-new-data.js           # check new data script
 │   ├── migrate-indonesia-regions.js    # Main migration script
+│   ├── sync-indonesia-regions.js       # sync script
 │   ├── docker-migration-helper.sh      # Interactive migration helper
+│   ├── setup-cron.sh                   # cronjob setup
 │   └── generate-env.js                 # Environment generator
 ├── migrations/
 │   └── 001_create_regions_table.sql    # Database schema
