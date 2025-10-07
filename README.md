@@ -85,7 +85,7 @@ regions (
 - PostgreSQL 15+ (if running locally)
 
 ### Source Wilayah Data
-- API from wilayah.id
+- API from wilayah.id & emsifa.github.io
 
 ### Option 1: Full Docker Setup (Recommended)
 
@@ -726,4 +726,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **⭐ Star this repo if it helps you build amazing applications with Indonesian regional data!**
 
-*Last updated: October 6, 2025*
+*Last updated: October 7, 2025*
